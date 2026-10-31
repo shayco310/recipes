@@ -12,9 +12,7 @@
       padding: 20px;
       text-align: center;
     }
-    h1 {
-      color: #8a4b1f;
-    }
+    h1 { color: #8a4b1f; }
     input {
       width: 90%;
       max-width: 400px;
@@ -32,13 +30,88 @@
       border: none;
       border-radius: 8px;
     }
+    #recipe {
+      max-width: 600px;
+      margin: 24px auto 0;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: right;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    #recipe h2 { color: #8a4b1f; margin-top: 0; }
+    .author { color: #777; margin-bottom: 16px; }
+    .gallery { display: flex; gap: 8px; overflow-x: auto; }
+    .gallery img { height: 150px; border-radius: 8px; }
+    li { margin-bottom: 8px; line-height: 1.5; }
   </style>
 </head>
 <body>
   <h1>ספר המתכונים שלנו</h1>
   <p>הדבק כאן קישור למתכון:</p>
-  <input type="text" placeholder="https://...">
+  <input id="linkInput" type="text" placeholder="https://...">
   <br>
-  <button>צור מתכון</button>
+  <button id="createBtn">צור מתכון</button>
+
+  <div id="recipe"></div>
+
+  <script>
+    // מתכון לדוגמה. בהמשך הנתונים האלה יגיעו מקישור אמיתי
+    const sampleRecipe = {
+      title: "שקשוקה קלאסית",
+      author: "דנה כהן",
+      ingredients: [
+        { name: "ביצים", amount: "4" },
+        { name: "עגבניות בשלות", amount: "6" },
+        { name: "בצל", amount: "1" },
+        { name: "שום", amount: "3 שיניים" },
+        { name: "שמן זית", amount: "3 כפות" },
+        { name: "פפריקה", amount: "1 כפית" }
+      ],
+      steps: [
+        "מטגנים את הבצל והשום בשמן זית עד שהם מזהיבים.",
+        "מוסיפים את העגבניות הקצוצות והפפריקה ומבשלים 15 דקות.",
+        "יוצרים גומחות ברוטב ושוברים לתוכן את הביצים.",
+        "מכסים ומבשלים עוד 5 דקות, עד שהביצים מוכנות."
+      ],
+      images: [
+        "https://picsum.photos/id/292/300/200",
+        "https://picsum.photos/id/312/300/200"
+      ]
+    };
+
+    // פונקציה שמקבלת מתכון ובונה ממנו את התצוגה בדף
+    function showRecipe(recipe) {
+      let html = "<h2>" + recipe.title + "</h2>";
+      html += "<div class='author'>מאת: " + recipe.author + "</div>";
+
+      if (recipe.images.length > 0) {
+        html += "<div class='gallery'>";
+        for (const url of recipe.images) {
+          html += "<img src='" + url + "'>";
+        }
+        html += "</div>";
+      }
+
+      html += "<h3>מצרכים</h3><ul>";
+      for (const item of recipe.ingredients) {
+        html += "<li>" + item.amount + " - " + item.name + "</li>";
+      }
+      html += "</ul>";
+
+      html += "<h3>אופן הכנה</h3><ol>";
+      for (const step of recipe.steps) {
+        html += "<li>" + step + "</li>";
+      }
+      html += "</ol>";
+
+      document.getElementById("recipe").innerHTML = html;
+    }
+
+    // כשלוחצים על הכפתור, מציגים את המתכון
+    document.getElementById("createBtn").addEventListener("click", function () {
+      showRecipe(sampleRecipe);
+    });
+  </script>
 </body>
 </html>
