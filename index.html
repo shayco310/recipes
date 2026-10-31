@@ -3,39 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ספר המתכונים שלנו</title>
+  <title>המתכונים שלי</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #fdf6ec;
       margin: 0;
       padding: 20px;
-      text-align: center;
     }
     .hidden { display: none !important; }
-    h1 { color: #8a4b1f; }
-    input {
-      width: 90%;
-      max-width: 400px;
-      padding: 12px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
+    h1 { color: #8a4b1f; text-align: center; }
     button {
-      margin-top: 12px;
-      padding: 12px 28px;
+      font-family: inherit;
       font-size: 16px;
       background: #c2662d;
       color: white;
       border: none;
       border-radius: 8px;
+      padding: 12px 28px;
+      cursor: pointer;
     }
     button:disabled { background: #7a9a6b; }
 
-    /* רשימת המתכונים השמורים */
-    #savedSection { max-width: 600px; margin: 32px auto 0; text-align: right; }
-    #savedSection h2 { color: #8a4b1f; }
+    /* רשימת המתכונים */
+    #savedList { max-width: 600px; margin: 0 auto; padding-bottom: 100px; }
     .saved-item {
       background: white;
       border-radius: 10px;
@@ -46,9 +37,22 @@
     }
     .saved-item .name { font-weight: bold; color: #8a4b1f; }
     .saved-item .by { color: #777; font-size: 14px; }
-    .empty { color: #777; }
+    .empty { color: #777; text-align: center; margin-top: 40px; }
 
-    /* דף המתכון */
+    /* כפתור צף */
+    #fab {
+      position: fixed;
+      left: 20px;
+      bottom: 24px;
+      border-radius: 999px;
+      padding: 16px 26px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 500;
+    }
+
+    /* דף מתכון */
     #recipeScreen { max-width: 600px; margin: 0 auto; }
     .back {
       display: block;
@@ -62,7 +66,6 @@
       background: white;
       border-radius: 12px;
       padding: 20px;
-      text-align: right;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     #recipe h2 { color: #8a4b1f; margin-top: 0; }
@@ -80,8 +83,8 @@
       font-weight: bold;
     }
 
-    /* חלון האישור */
-    #confirmModal {
+    /* חלונות קופצים */
+    .overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0, 0, 0, 0.6);
@@ -95,14 +98,55 @@
       background: white;
       border-radius: 12px;
       padding: 24px;
-      max-width: 340px;
+      max-width: 380px;
       width: 100%;
       text-align: center;
     }
     .modal-box h3 { margin-top: 0; color: #8a4b1f; }
-    .modal-box button { display: block; width: 100%; }
+    .modal-box .full { display: block; width: 100%; margin-top: 12px; }
     .danger { background: #b3402a; }
     .secondary { background: #8a4b1f; }
+
+    /* חלון הוספת קישור */
+    .link-row { display: flex; gap: 10px; align-items: center; }
+    #linkInput {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      direction: ltr;
+      text-align: left;
+    }
+    #linkOk {
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 24px;
+      background: #4f8a3c;
+      flex-shrink: 0;
+    }
+    #linkError { color: #b3402a; font-size: 14px; margin-top: 10px; min-height: 18px; }
+
+    /* הודעה קטנה */
+    #toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-size: 15px;
+      z-index: 3000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #toast.show { opacity: 1; }
 
     /* גלריה מוגדלת */
     #lightbox {
@@ -136,18 +180,11 @@
 </head>
 <body>
 
-  <!-- דף ראשון -->
+  <!-- דף ראשי -->
   <div id="homeScreen">
-    <h1>ספר המתכונים שלנו</h1>
-    <p>הדבק כאן קישור למתכון:</p>
-    <input id="linkInput" type="text" placeholder="https://...">
-    <br>
-    <button id="createBtn">צור מתכון</button>
-
-    <div id="savedSection">
-      <h2>המתכונים שלי</h2>
-      <div id="savedList"></div>
-    </div>
+    <h1>המתכונים שלי</h1>
+    <div id="savedList"></div>
+    <button id="fab">+ מתכון</button>
   </div>
 
   <!-- דף מתכון -->
@@ -157,15 +194,30 @@
     <button id="saveBtn">שמור בספר המתכונים שלי</button>
   </div>
 
+  <!-- חלון הוספת קישור -->
+  <div id="addModal" class="overlay hidden">
+    <div class="modal-box">
+      <h3>הדבק קישור למתכון</h3>
+      <div class="link-row">
+        <input id="linkInput" type="text" placeholder="https://...">
+        <button id="linkOk">✓</button>
+      </div>
+      <div id="linkError"></div>
+    </div>
+  </div>
+
   <!-- חלון אישור חזרה -->
-  <div id="confirmModal" class="hidden">
+  <div id="confirmModal" class="overlay hidden">
     <div class="modal-box">
       <h3>לחזור לדף הראשי?</h3>
       <p>המתכון עוד לא נשמר. אם תחזור, הוא יבוטל.</p>
-      <button class="danger" id="confirmLeave">חזרה וביטול המתכון</button>
-      <button class="secondary" id="confirmStay">המשך צפייה</button>
+      <button class="full danger" id="confirmLeave">חזרה וביטול המתכון</button>
+      <button class="full secondary" id="confirmStay">המשך צפייה</button>
     </div>
   </div>
+
+  <!-- הודעה קטנה -->
+  <div id="toast"></div>
 
   <!-- גלריה מוגדלת -->
   <div id="lightbox">
@@ -203,27 +255,39 @@
       ]
     };
 
-    // ----- אלמנטים שנשתמש בהם -----
+    // ----- אלמנטים -----
     const homeScreen = document.getElementById("homeScreen");
     const recipeScreen = document.getElementById("recipeScreen");
+    const addModal = document.getElementById("addModal");
     const confirmModal = document.getElementById("confirmModal");
     const saveBtn = document.getElementById("saveBtn");
+    const linkInput = document.getElementById("linkInput");
+    const linkError = document.getElementById("linkError");
+    const toast = document.getElementById("toast");
 
-    // ----- מצב האפליקציה (מה שהאפליקציה "זוכרת" כרגע) -----
+    // ----- מצב האפליקציה -----
     let currentRecipe = null;
     let currentIsSaved = false;
     let currentImages = [];
     let currentIndex = 0;
+    let toastTimer = null;
 
-    // ----- שמירה וקריאה מהזיכרון של הדפדפן -----
+    // ----- שמירה וקריאה מהדפדפן -----
     function getSaved() {
       return JSON.parse(localStorage.getItem("myRecipes") || "[]");
     }
     function setSaved(list) {
       localStorage.setItem("myRecipes", JSON.stringify(list));
     }
-    function isAlreadySaved(recipe) {
-      return getSaved().some(function (r) { return r.sourceUrl === recipe.sourceUrl; });
+
+    // ----- הודעה קטנה -----
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        toast.classList.remove("show");
+      }, 2500);
     }
 
     // ----- מעבר בין דפים -----
@@ -237,7 +301,7 @@
       currentRecipe = recipe;
       currentIsSaved = alreadySaved;
       showRecipe(recipe);
-      updateSaveButton();
+      saveBtn.classList.toggle("hidden", alreadySaved);
       showScreen("recipe");
     }
 
@@ -247,19 +311,12 @@
       showScreen("home");
     }
 
-    function updateSaveButton() {
-      saveBtn.disabled = currentIsSaved;
-      saveBtn.textContent = currentIsSaved
-        ? "✓ המתכון שמור בספר שלך"
-        : "שמור בספר המתכונים שלי";
-    }
-
-    // ----- רשימת המתכונים השמורים -----
+    // ----- רשימת המתכונים -----
     function renderSavedList() {
       const list = getSaved();
       const box = document.getElementById("savedList");
       if (list.length === 0) {
-        box.innerHTML = "<p class='empty'>עוד לא שמרת מתכונים.</p>";
+        box.innerHTML = "<p class='empty'>עוד לא שמרת מתכונים.<br>לחץ על + מתכון כדי להתחיל.</p>";
         return;
       }
       let html = "";
@@ -274,8 +331,7 @@
     document.getElementById("savedList").addEventListener("click", function (e) {
       const item = e.target.closest(".saved-item");
       if (!item) return;
-      const recipe = getSaved()[Number(item.dataset.i)];
-      openRecipe(recipe, true);
+      openRecipe(getSaved()[Number(item.dataset.i)], true);
     });
 
     // ----- בניית תצוגת המתכון -----
@@ -310,11 +366,39 @@
       document.getElementById("recipe").innerHTML = html;
     }
 
-    // ----- כפתורים -----
-    document.getElementById("createBtn").addEventListener("click", function () {
-      openRecipe(sampleRecipe, isAlreadySaved(sampleRecipe));
+    // ----- חלון הוספת קישור -----
+    function openAddModal() {
+      linkInput.value = "";
+      linkError.textContent = "";
+      addModal.classList.remove("hidden");
+      linkInput.focus();
+    }
+    function closeAddModal() {
+      addModal.classList.add("hidden");
+    }
+
+    function submitLink() {
+      const url = linkInput.value.trim();
+      if (!url.startsWith("http")) {
+        linkError.textContent = "יש להדביק קישור תקין (מתחיל ב-http)";
+        return;
+      }
+      closeAddModal();
+      // כרגע מציגים מתכון לדוגמה עם הקישור שהודבק
+      const recipe = Object.assign({}, sampleRecipe, { sourceUrl: url });
+      openRecipe(recipe, false);
+    }
+
+    document.getElementById("fab").addEventListener("click", openAddModal);
+    document.getElementById("linkOk").addEventListener("click", submitLink);
+    linkInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") submitLink();
+    });
+    addModal.addEventListener("click", function (e) {
+      if (e.target === addModal) closeAddModal();
     });
 
+    // ----- חזרה ושמירה -----
     document.getElementById("backBtn").addEventListener("click", function () {
       if (currentIsSaved) {
         goHome();
@@ -322,7 +406,6 @@
         confirmModal.classList.remove("hidden");
       }
     });
-
     document.getElementById("confirmLeave").addEventListener("click", goHome);
     document.getElementById("confirmStay").addEventListener("click", function () {
       confirmModal.classList.add("hidden");
@@ -332,8 +415,8 @@
       const list = getSaved();
       list.push(currentRecipe);
       setSaved(list);
-      currentIsSaved = true;
-      updateSaveButton();
+      goHome();
+      showToast("✓ המתכון נשמר");
     });
 
     // ----- הגלריה המוגדלת -----
@@ -373,8 +456,11 @@
     });
 
     document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        closeLightbox();
+        closeAddModal();
+      }
       if (!lightbox.classList.contains("open")) return;
-      if (e.key === "Escape") closeLightbox();
       if (e.key === "ArrowLeft") nextImage();
       if (e.key === "ArrowRight") prevImage();
     });
@@ -391,7 +477,7 @@
       }
     });
 
-    // כשהדף נטען, מציגים את המתכונים השמורים
+    // בטעינת הדף מציגים את המתכונים השמורים
     renderSavedList();
   </script>
 </body>
